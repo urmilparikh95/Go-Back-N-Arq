@@ -37,12 +37,14 @@ class Server {
       // Listen to request from sender
       while(true) {
          try {
-            byte[] buffer = new byte[5000];
+            byte[] buffer = new byte[1024];
             DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
             serverSocket.receive(packet);
+            // get packet content
+            byte[] packet_content = packet.getData();
             // get sequence number
             byte[] seq_no_buf = new byte[4];
-            System.arraycopy(seq_no_buf, 0, packet.getData(), 0, seq_no_buf.length);
+            System.arraycopy(packet_content, 0, seq_no_buf, 0, seq_no_buf.length);
             int seq_no = ByteBuffer.wrap(seq_no_buf).getInt();
             // Drop packet based on probablity
             if(Math.random() < p) {
@@ -50,19 +52,22 @@ class Server {
                continue;
             }
             // get data from packet
-            byte[] data = new byte[packet.getData().length-8];
-            System.arraycopy(data, 0, packet.getData(), 8, data.length);
+            byte[] data = new byte[packet.getLength() - 8];
+            System.arraycopy(packet_content, 8, data, 0, data.length);
             // generate ACK only if
             // 1. checksum is valid
             // 2. sequence is in order
             // 3. is a data packet
-            if((checksum(data)[0] == packet.getData()[4] && checksum(data)[1] == packet.getData()[5]) && (idx == seq_no) && (packet.getData()[6] == 85 && packet.getData()[7] == 85)) {
+            if((checksum(data)[0] == packet_content[4] && checksum(data)[1] == packet_content[5]) && (idx == seq_no) && (packet_content[6] == 85 && packet_content[7] == 85)) {
                InetAddress clientIPAddress = packet.getAddress();
                int clientPort = packet.getPort();
                byte[] sendData = generateACK(seq_no);
                DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientIPAddress, clientPort);
                serverSocket.send(sendPacket);
+               // increment idx which is the next expected seq no
                idx++;
+               // write the data to file
+               f.write(data);
             }
 
          } catch(Exception e) {
@@ -93,8 +98,10 @@ class Server {
    public static byte[] generateACK(int seq_no) {
       byte[] header = new byte[8];
       byte[] seq_no_buf = ByteBuffer.allocate(4).putInt(seq_no).array();
-      System.arraycopy(header, 0, seq_no_buf, 0, seq_no_buf.length);
+      System.arraycopy(seq_no_buf, 0, header, 0, seq_no_buf.length);
       // binary to decimal conversion for 1010101010101010
+      header[4] = 0;
+      header[5] = 0;
       header[6] = -43;
       header[7] = 86;
       return header;

@@ -41,13 +41,14 @@ class Client {
       // Maintain a window index to know the current index of window until where ACK received
       DatagramSocket clientSocket = new DatagramSocket();
       int window_index = 0;
-      int remaining_window_size = N;
       while(window_index < packets.length) {
 
          // Send packets without ack for the remaining window size
          int idx = window_index;
+         int remaining_window_size = N;
          while(remaining_window_size-- > 0 && idx < packets.length) {
             DatagramPacket sendPacket = new DatagramPacket(packets[idx], packets[idx].length, IPAddress, port);
+            System.out.println("packets sent = " + idx);
             idx++;
             clientSocket.send(sendPacket);
          }
@@ -61,8 +62,8 @@ class Client {
             clientSocket.receive(receivePacket);
             int ack_seq_no = ProcessACK(receivePacket.getData());
             if(ack_seq_no == window_index){
+               System.out.println("ACK index = " + window_index);
                window_index++;
-               remaining_window_size++;
             }
          } catch (SocketTimeoutException ste) {
             // TIMEOUT!! Do nothing.
@@ -121,7 +122,6 @@ class Client {
          System.arraycopy(data, start_idx, packet_data, 0, packet_data.length);
          // generate Header fields for packet
          // 4 byte seq number
-         idx = end_idx/MSS;
          byte[] seq_no = ByteBuffer.allocate(4).putInt(idx).array();
          // 2 byte checksum
          byte[] chksum = checksum(packet_data);
@@ -139,6 +139,7 @@ class Client {
          // store it in packet list
          packets[idx] = packet;
 
+         idx++;
          start_idx = end_idx;
       }
 
@@ -150,7 +151,7 @@ class Client {
       if(data[6] != -43 && data[7] != 86) return -1;
       // get the sequence number from header of packet
       byte[] seq_no = new byte[4];
-      System.arraycopy(seq_no, 0, data, 0, seq_no.length);
+      System.arraycopy(data, 0, seq_no, 0, seq_no.length);
       return ByteBuffer.wrap(seq_no).getInt();
    }
 
