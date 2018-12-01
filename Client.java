@@ -30,8 +30,9 @@ class Client {
       byte[][] packets = generatePackets(buffer, MSS);
 
       // Get IP address of Receiver from the hostname
+      InetAddress IPAddress = null;
       try {
-			InetAddress IPAddress = InetAddress.getByName(hostname);
+			IPAddress = InetAddress.getByName(hostname);
 		} catch (UnknownHostException e) {
          System.out.println("Host not found!");
          System.exit(0);
@@ -65,6 +66,7 @@ class Client {
             }
          } catch (SocketTimeoutException ste) {
             // TIMEOUT!! Do nothing.
+            System.out.println("Timeout, sequence number = " + window_index);
          }
 
       }

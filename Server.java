@@ -56,25 +56,20 @@ class Server {
             // 1. checksum is valid
             // 2. sequence is in order
             // 3. is a data packet
-            if((checksum(data)[0] == packet.getData()[4] && checksum(data)[1] == packet.getData()[5]) && (idx == seq_no) && ())
+            if((checksum(data)[0] == packet.getData()[4] && checksum(data)[1] == packet.getData()[5]) && (idx == seq_no) && (packet.getData()[6] == 85 && packet.getData()[7] == 85)) {
+               InetAddress clientIPAddress = packet.getAddress();
+               int clientPort = packet.getPort();
+               byte[] sendData = generateACK(seq_no);
+               DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, clientIPAddress, clientPort);
+               serverSocket.send(sendPacket);
+               idx++;
+            }
 
          } catch(Exception e) {
             e.printStackTrace();
+            break;
          }
       }
-      // DatagramSocket serverSocket = new DatagramSocket(9876);
-      byte[] receiveData = new byte[1024];
-      byte[] sendData = new byte[1024];
-      DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-      serverSocket.receive(receivePacket);
-      String sentence = new String(receivePacket.getData());
-      System.out.println("RECEIVED: " + sentence);
-      InetAddress IPAddress = receivePacket.getAddress();
-      int port = receivePacket.getPort();
-      String capitalizedSentence = sentence.toUpperCase();
-      sendData = capitalizedSentence.getBytes();
-      DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, IPAddress, port);
-      serverSocket.send(sendPacket);
    }
 
    public static byte[] checksum(byte[] data) {
@@ -96,8 +91,13 @@ class Server {
    }
 
    public static byte[] generateACK(int seq_no) {
-
-      return null;
+      byte[] header = new byte[8];
+      byte[] seq_no_buf = ByteBuffer.allocate(4).putInt(seq_no).array();
+      System.arraycopy(header, 0, seq_no_buf, 0, seq_no_buf.length);
+      // binary to decimal conversion for 1010101010101010
+      header[6] = -43;
+      header[7] = 86;
+      return header;
    }
 
 }
