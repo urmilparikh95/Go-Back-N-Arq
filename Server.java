@@ -75,16 +75,16 @@ public class Server {
 				// 1. checksum is valid
 				// 2. sequence is in order
 				// 3. is a data packet
-				if((checksum(data)[0] == packet_content[4] && checksum(data)[1] == packet_content[5]) && (idx == seq_no) && (packet_content[6] == 85 && packet_content[7] == 85)) {
+				if((checksum(data)[0] == packet_content[4] && checksum(data)[1] == packet_content[5]) && (idx == seq_no || idx == seq_no -1) && (packet_content[6] == 85 && packet_content[7] == 85)) {
 					// write the data to file
 					f.write(data);
 					// Generate ACK
 					InetAddress IP_addr = packet.getAddress();
 					int portNumber = packet.getPort();
-					byte[] acknowledgement = generateACK(seq_no);
+					byte[] acknowledgement = generateACK(idx);
 					packet = new DatagramPacket(acknowledgement, acknowledgement.length, IP_addr, portNumber);
 					serverSocket.send(packet);
-					System.out.println("ACK sent for: " + seq_no);
+					System.out.println("ACK sent for: " + idx);
 					// Increment index
 					idx++;
 				}
