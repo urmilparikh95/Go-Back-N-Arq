@@ -75,7 +75,7 @@ public class Server {
 				// 1. checksum is valid
 				// 2. sequence is in order
 				// 3. is a data packet
-				if((checksum(data)[0] == packet_content[4] && checksum(data)[1] == packet_content[5]) && (idx == seq_no || idx == seq_no -1) && (packet_content[6] == 85 && packet_content[7] == 85)) {
+				if((checksum(data)[0] == packet_content[4] && checksum(data)[1] == packet_content[5]) && (idx == seq_no || idx == seq_no + 1) && (packet_content[6] == 85 && packet_content[7] == 85)) {
 					// write the data to file
 					f.write(data);
 					// Generate ACK
